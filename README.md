@@ -65,7 +65,7 @@ Follow these steps to set up the Jharkhand Vaccination Survey web application lo
    php artisan serve
    ```
 
-Access the application in your web browser at `http://localhost:8000`.
+Access the application in your web browser at `http://localhost/main/`.
 
 ## Contribution
 
@@ -76,7 +76,7 @@ This project is open to contributions. If you would like to contribute to the Jh
 
 ## Contact
 
-For any inquiries or support, feel free to reach out to Yogesh Kumar Jha at yogesh.jha@example.com.
+For any inquiries or support, feel free to reach out to Yogesh Kumar Jha at yogeshjha0707@gmail.com.
 
 ## License
 
