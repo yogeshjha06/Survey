@@ -391,3 +391,7 @@ else {
 </body>
 
 </html>
+
+# AI-generated changes:
+# AI-Generated Code:
+add new condition for this file and make it optimized and add a try catch in this
