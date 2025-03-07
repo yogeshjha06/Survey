@@ -1,393 +1,133 @@
-<?php
-include('db.php');
-if (!isset($_SESSION['is_login'])) {
-    header('location: index.php');
-    die();
-} 
-if (!isset($_SESSION['ch1'])) {
-    header('location: survey.php');
-    exit();
-} 
-else {
+Based on the code provided, here are some suggestions for optimizing the HTML and PHP files:
 
-    $id = $_SESSION['id'];
-    //code to fetch all details of user
-    $query = "SELECT * FROM tbl_login WHERE id='$id'";
-    $stmt = mysqli_query($con, $query);
-    $row = mysqli_fetch_array($stmt); {
+**HTML File (`index.html`)**
 
-        $name = $row['officerName'];
-        $email = $row['email'];
-        $phone = $row['officerMObile'];
-
-        $address = $row['bcode'] . ", " . $row['dcodeb'];
-        $designation = $row['designation'];
-        $role = $row['urole'];
-
-        $id = $row[0];
-
-        $password = $row['password'];
-
-        $district = $row['dcodeb'];
-        $block = $row['bcode'];
-        $sector = $row['sector']; //sector name
-
-    }
-}
-?>
+Create a new file named `index.html` with the following content:
+```html
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name="description" content="" />
-    <meta name="author" content="" />
-    <title>Survey - Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
-    <link href="css/styles.css" rel="stylesheet" />
-    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-    <link rel="icon" type="image/x-icon" href="assets/img/logo.png">
-
-
-    <!-- sweet alert -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="sweetalert2.all.min.js"></script>
-    <script src="sweetalert2.min.js"></script>
-    <link rel="stylesheet" href="sweetalert2.min.css">
-    <script src='https://unpkg.com/sweetalert/dist/sweetalert.min.js'></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Form</title>
+    <link rel="stylesheet" href="style.css"> <!-- link to your CSS file -->
 </head>
+<body>
+    <form id="survey-form">
+        <!-- form fields will be generated dynamically using PHP -->
+    </form>
 
-<body class="sb-nav-fixed">
-
-<?php require('header.php'); ?>
-
-        </div>
-        <div id="layoutSidenav_content">
-            <main  style="padding: 15px;">
-                <!-- start form add new admin -->
-                <section class="section">
-                    <div class="row">
-                        <div class="col-lg-12">
-
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Immunization Survey</h5>
-
-                                    <!-- General Form Elements -->
-                                    <form action="#" method="POST">
-
-                                    <div class="row mb-3">
-                                        <label class="col-sm-2 col-form-label">Scheme</label>
-                                        <div class="col-sm-10">
-                                            <select id="scheme" name="scheme" class="form-select" aria-label="Default select example" required>
-                                            <option value="" disabled selected>Select Scheme</option>
-                                            <?php
-                                                // Assuming $con is your database connection
-                                                $query = "SELECT * FROM tbl_scheme WHERE status='0'";
-                                                $stmt = mysqli_query($con, $query);
-                                                while($row = mysqli_fetch_array($stmt)) {
-                                                echo "<option value='".$row['scheme']."'>".$row['scheme']."</option>";       
-                                                } 
-                                            ?>                      
-                                            </select>
-                                        </div>
-                                        </div>
-
-
-                                        <div class="row mb-3">
-                                        <label class="col-sm-2 col-form-label">Project</label>
-                                        <div class="col-sm-10">
-                                            <select id="project" name="project" class="form-select" aria-label="Default select example" required>
-                                            <option value="" disabled selected>Select Project</option>
-                                            <?php
-                                                // Assuming $con is your database connection
-                                                $query = "SELECT * FROM tbl_project WHERE status='0'";
-                                                $stmt = mysqli_query($con, $query);
-                                                while($row = mysqli_fetch_array($stmt)) {
-                                                echo "<option value='".$row['project']."'>".$row['project']."</option>";       
-                                                } 
-                                            ?>                      
-                                            </select>
-                                        </div>
-                                        </div>
-
-
-                                      
-
-
-                                        <div class="row mb-3">
-                                            <label class="col-sm-2 col-form-label">Month</label>
-                                            <div class="col-sm-10">
-                                                <select id="month" name="month" class="form-select" aria-label="Default select example" required>
-                                                    <option value="" disabled selected>Select Type </option>
-                                                    <option value="Jan">January</option>
-                                                    <option value="Feb">February</option>
-                                                    <option value="Mar">March</option>
-                                                    <option value="Apr">April</option>
-                                                    <option value="May">May</option>
-                                                    <option value="Jun">June</option>
-                                                    <option value="Jul">July</option>
-                                                    <option value="Aug">August</option>
-                                                    <option value="Sep">September</option>
-                                                    <option value="Oct">October</option>
-                                                    <option value="Nov">November</option>
-                                                    <option value="Dec">December</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="row mb-3">
-                                        <label class="col-sm-2 col-form-label">District</label>
-                                        <div class="col-sm-10">
-                                            <select id="districtSelect" name="districtSelect" class="form-select" aria-label="Default select example" required>
-                                            <option value="" disabled selected>Select District</option>
-                                            <?php
-                                                // Assuming $con is your database connection
-                                                $query = "SELECT * FROM tbl_district";
-                                                $stmt = mysqli_query($con, $query);
-                                                while($row = mysqli_fetch_array($stmt)) {
-                                                echo "<option value='".$row['district_code']."'>".$row['district_name']."</option>";       
-                                                } 
-                                            ?>                      
-                                            </select>
-                                        </div>
-                                        </div>
-
-
-                                        <div class="row mb-3">
-                                            <label class="col-sm-2 col-form-label">Block</label>
-                                            <div class="col-sm-10">
-                                                <select id="blockSelect" name="blockSelect" class="form-select" aria-label="Default select example" required>
-                                                    <option disabled value="" selected>Select Block</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-
-                                        <div class="row mb-3">
-                                            <label class="col-sm-2 col-form-label">Sector</label>
-                                            <div class="col-sm-10">
-                                                <select id="sectorSelect" name="sectorSelect" class="form-select" aria-label="Default select example" required>
-                                                    <option disabled value="" selected>Select Sector</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <script>
-                                        // Get references to the dropdowns
-                                        const districtSelect = document.getElementById('districtSelect');
-                                        const blockSelect = document.getElementById('blockSelect');
-                                        const sectorSelect = document.getElementById('sectorSelect');
-
-                                        // Function to populate the block dropdown based on district selection
-                                        function populateBlockDropdown(selectedDistrict) {
-                                            // Clear existing options in the block dropdown
-                                            blockSelect.innerHTML = '<option disabled value="" selected>Select Block</option>';
-
-                                            // Fetch blocks associated with the selected district from the server using AJAX
-                                            if (selectedDistrict !== '') {
-                                                fetch('get_blocks.php?district_code=' + selectedDistrict)
-                                                    .then(response => response.json())
-                                                    .then(data => {
-                                                        data.forEach(block => {
-                                                            const option = document.createElement('option');
-                                                            option.value = block.block_code;
-                                                            option.textContent = block.block_name;
-                                                            blockSelect.appendChild(option);
-                                                        });
-                                                    })
-                                                    .catch(error => console.error('Error fetching blocks:', error));
-                                            }
-                                        }
-
-                                        // Function to populate the sector dropdown based on district and block selections
-                                        function populateSectorDropdown(selectedDistrict, selectedBlock) {
-                                            // Clear existing options in the sector dropdown
-                                            sectorSelect.innerHTML = '<option disabled value="" selected>Select Sector</option>';
-
-                                            // Fetch sectors associated with the selected district and block from the server using AJAX
-                                            if (selectedDistrict !== '' && selectedBlock !== '') {
-                                                fetch('get_sectors.php?district_code=' + selectedDistrict + '&block_code=' + selectedBlock)
-                                                    .then(response => response.json())
-                                                    .then(data => {
-                                                        data.forEach(sector => {
-                                                            const option = document.createElement('option');
-                                                            option.value = sector.sector_code;
-                                                            option.textContent = sector.sector_name;
-                                                            sectorSelect.appendChild(option);
-                                                        });
-                                                    })
-                                                    .catch(error => console.error('Error fetching sectors:', error));
-                                            }
-                                        }
-
-                                        // Add event listeners to the district and block dropdowns
-                                        districtSelect.addEventListener('change', () => {
-                                            const selectedDistrict = districtSelect.value;
-                                            populateBlockDropdown(selectedDistrict);
-                                        });
-
-                                        blockSelect.addEventListener('change', () => {
-                                            const selectedDistrict = districtSelect.value;
-                                            const selectedBlock = blockSelect.value;
-                                            populateSectorDropdown(selectedDistrict, selectedBlock);
-                                        });
-                                        </script>
-
-                                        <div class="row mb-4">
-                                            <label for="year" class="col-sm-2 col-form-label">Year</label>
-                                            <div class="col-sm-10">
-                                                <input id="year" name="year" type="number" class="form-control" maxlength="4" required>
-                                            </div>
-                                        </div>
-                                        <div class="row mb-4">
-                                            <label for="pregnant" class="col-sm-2 col-form-label">Number of Pregnant Women</label>
-                                            <div class="col-sm-10">
-                                                <input id="pregnant" name="pregnant" type="number" class="form-control" required>
-                                            </div>
-                                        </div>
-
-                                        <div class="row mb-4">
-                                            <h5>Stage One Info</h5>
-                                        </div>
-                                        <div class="row mb-4">
-                                            <label for="tt1eligible" class="col-sm-2 col-form-label">Number of T.T.1 Elligible Women</label>
-                                            <div class="col-sm-10">
-                                                <input id="tt1eligible" name="tt1eligible" type="number" class="form-control" required>
-                                            </div>
-                                        </div>
-
-                                        <div class="row mb-4">
-                                            <label for="tt1achieve" class="col-sm-2 col-form-label">Number of T.T.1 Achieved Women</label>
-                                            <div class="col-sm-10">
-                                                <input id="tt1achieve" name="tt1achieve" type="number" class="form-control" required>
-                                            </div>
-                                        </div>
-
-                                        <div class="row mb-4">
-                                            <h5>Stage Two Info</h5>
-                                        </div>
-                                        <div class="row mb-4">
-                                            <label for="tt2eligible" class="col-sm-2 col-form-label">Number of T.T.2 Elligible Women</label>
-                                            <div class="col-sm-10">
-                                                <input id="tt2eligible" name="tt2eligible" type="number" class="form-control" required>
-                                            </div>
-                                        </div>
-
-                                        <div class="row mb-4">
-                                            <label for="tt2achieve" class="col-sm-2 col-form-label">Number of T.T.2 Achieved Women</label>
-                                            <div class="col-sm-10">
-                                                <input id="tt2achieve" name="tt2achieve" type="number" class="form-control" required>
-                                            </div>
-                                        </div>
-
-                                        <div class="row mb-4">
-                                            <h5>Stage Three Info</h5>
-                                        </div>
-                                        <div class="row mb-4">
-                                            <label for="boostereligible" class="col-sm-2 col-form-label">Number of T.T.Booster Elligible Women</label>
-                                            <div class="col-sm-10">
-                                                <input id="boostereligible" name="boostereligible" type="number" class="form-control" required>
-                                            </div>
-                                        </div>
-
-                                        <div class="row mb-4">
-                                            <label for="boosterachieve" class="col-sm-2 col-form-label">Number of T.T.Booster Achieved Women</label>
-                                            <div class="col-sm-10">
-                                                <input id="boosterachieve" name="boosterachieve" type="number" class="form-control" required>
-                                            </div>
-                                        </div>
-
-                                        <div class="row mb-3">
-                                            <center>
-                                                <div class="col-sm-10">
-                                                    <button id="submit" name="submit" type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-floppy-disk"></i>&nbsp;Save</button>
-                                                </div>
-                                            </center>
-                                        </div>
-
-                                    </form><!-- End General Form Elements -->
-
-
-
-                                    <?php
-                                    if (isset($_POST['submit'])) {
-                                        // Sanitize and retrieve the POST data
-                                        $scheme             =  mysqli_real_escape_string($con, $_POST['scheme']);
-                                        $project            =  mysqli_real_escape_string($con, $_POST['project']);
-                                        $month              =  mysqli_real_escape_string($con, $_POST['month']);
-                                        $year               =  mysqli_real_escape_string($con, $_POST['year']);
-                                        $pregnant           =  mysqli_real_escape_string($con, $_POST['pregnant']);
-                                        $tt1eligible        =  mysqli_real_escape_string($con, $_POST['tt1eligible']);
-                                        $tt1achieve         =  mysqli_real_escape_string($con, $_POST['tt1achieve']);
-                                        $tt2eligible        =  mysqli_real_escape_string($con, $_POST['tt2eligible']);
-                                        $tt2achieve         =  mysqli_real_escape_string($con, $_POST['tt2achieve']);
-                                        $boostereligible    =  mysqli_real_escape_string($con, $_POST['boostereligible']);
-                                        $boosterachieve     =  mysqli_real_escape_string($con, $_POST['boosterachieve']);
-                                 
-                                        
-                                        $district1 =  $_POST['districtSelect'];
-                                        $block1 =  $_POST['blockSelect'];
-                                        $sector1 =  $_POST['sectorSelect'];
-
-                                        date_default_timezone_set("Asia/Calcutta");
-                                        $date_now = date("Y-m-d");
-
-
-
-
-                                        //insert data query
-                                        $res = mysqli_query($con, "INSERT INTO `1_immunization`(`schemename`, `district`, `block`, `sector`, `month`, `projectName`, `reg_preg_women`, `tt1_target`, `tt1_achieved`, `tt2_target`, `tt2_achieved`, `ttbooster_target`, `ttboster_achieved`, `submittedBy`, `submittedOn`, `forYear`, `submitedID`) VALUES 
-                                        ('$scheme', '$district1', '$block1', '$sector1', '$month', '$project', '$pregnant', '$tt1eligible', '$tt1achieve', '$tt2eligible', '$tt2achieve', '$boostereligible', '$boosterachieve', '$name', '$date_now', '$year', '$id')");
-
-
-                                        if ($res) {
-                                            unset($_SESSION['ch1']);
-                                            //inserted successfully                                            
-                                                echo "<script>                
-                                                   swal({
-                                                       icon: 'success',
-                                                       title: 'Success',
-                                                       text: 'Survey Successfully Added!',
-                                                       }).then(function() {
-                                                           window.location = 'survey.php';
-                                                       });                        
-                                                       </script>";
-                                            } 
-                                        else 
-                                        {
-                                                echo "
-                                                   <script>                
-                                                       swal({
-                                                           icon: 'info',
-                                                           title:'Failed',
-                                                           text: 'Unable to add survey!',
-                                                           }).then(function() {
-                                                           window.location = 'survey.php';
-                                                           });                        
-                                                           </script>";
-                                            }
-                                        }                                    
-                                    ?>
-
-
-                                </div>
-                            </div>
-
-                        </div>
-
-
-                    </div>
-                </section>
-                <!-- end form -->
-            </main>
-            
-
-            <?php require('footer.php'); ?>
-
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10.1.15/dist/sweetalert2.all.min.js"></script> <!-- include SweetAlert library -->
 </body>
-
 </html>
+```
+**PHP File (`submit.php`)**
+
+Create a new file named `submit.php` with the following content:
+```php
+<?php
+// database connection settings
+$conn = mysqli_connect("localhost", "username", "password", "database");
+
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+// sanitize and retrieve POST data
+$scheme = mysqli_real_escape_string($conn, $_POST['scheme']);
+$project = mysqli_real_escape_string($conn, $_POST['project']);
+$month = mysqli_real_escape_string($conn, $_POST['month']);
+$year = mysqli_real_escape_string($conn, $_POST['year']);
+$pregnant = mysqli_real_escape_string($conn, $_POST['pregnant']);
+$tt1eligible = mysqli_real_escape_string($conn, $_POST['tt1eligible']);
+$tt1achieve = mysqli_real_escape_string($conn, $_POST['tt1achieve']);
+$tt2eligible = mysqli_real_escape_string($conn, $_POST['tt2eligible']);
+$tt2achieve = mysqli_real_escape_string($conn, $_POST['tt2achieve']);
+$boostereligible = mysqli_real_escape_string($conn, $_POST['boostereligible']);
+$boosterachieve = mysqli_real_escape_string($conn, $_POST['boosterachieve']);
+
+// insert data query
+$query = "INSERT INTO `1_immunization`(`schemename`, `district`, `block`, `sector`, `month`, `projectName`, `reg_preg_women`, `tt1_target`, `tt1_achieved`, `tt2_target`, `tt2_achieved`, `ttbooster_target`, `ttboster_achieved`, `submittedBy`, `submittedOn`, `forYear`, `submitedID`) VALUES 
+            ('$scheme', '$district', '$block', '$sector', '$month', '$project', '$pregnant', '$tt1eligible', '$tt1achieve', '$tt2eligible', '$tt2achieve', '$boostereligible', '$boosterachieve', '$name', '$date_now', '$year', '$id')";
+
+if (mysqli_query($conn, $query)) {
+    unset($_SESSION['ch1']);
+    echo "<script> 
+        swal({
+            icon: 'success',
+            title: 'Success',
+            text: 'Survey Successfully Added!',
+        }).then(function() {
+            window.location = 'survey.php';
+        });
+    </script>";
+} else {
+    echo "Error: " . mysqli_error($conn);
+}
+
+mysqli_close($conn); // close database connection
+?>
+```
+**Linking the PHP File to the HTML**
+
+In your `index.html` file, add a link to the `submit.php` file:
+```html
+<a href="submit.php">Submit Survey</a>
+```
+**Optimizing the Code**
+
+To optimize the code, consider the following suggestions:
+
+1. Use prepared statements instead of concatenating user input into SQL queries.
+2. Validate and sanitize user input before using it in your code.
+3. Use a consistent coding style throughout your files.
+4. Consider using a framework or library to simplify your code and improve performance.
+
+Here is an updated version of the `submit.php` file with prepared statements:
+```php
+<?php
+// database connection settings
+$conn = new mysqli("localhost", "username", "password", "database");
+
+if (!$conn) {
+    die("Connection failed: " . $conn->error);
+}
+
+// sanitize and retrieve POST data
+$scheme = $_POST['scheme'];
+$project = $_POST['project'];
+$month = $_POST['month'];
+$year = $_POST['year'];
+$pregnant = $_POST['pregnant'];
+$tt1eligible = $_POST['tt1eligible'];
+$tt1achieve = $_POST['tt1achieve'];
+$tt2eligible = $_POST['tt2eligible'];
+$tt2achieve = $_POST['tt2achieve'];
+$boostereligible = $_POST['boostereligible'];
+$boosterachieve = $_POST['boosterachieve'];
+
+// prepare insert query
+$stmt = $conn->prepare("INSERT INTO `1_immunization`(`schemename`, `district`, `block`, `sector`, `month`, `projectName`, `reg_preg_women`, `tt1_target`, `tt1_achieved`, `tt2_target`, `tt2_achieved`, `ttbooster_target`, `ttboster_achieved`, `submittedBy`, `submittedOn`, `forYear`, `submitedID`) VALUES 
+                        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+$stmt->bind_param("sssssssssss", $scheme, $_SESSION['ch1'], $_POST['district'], $_POST['block'], $_POST['sector'], $_POST['project'], $_POST['pregnant'], $_POST['tt1eligible'], $_POST['tt1achieve'], $_POST['tt2eligible'], $_POST['tt2achieve'], $_POST['boostereligible'], $_POST['boosterachieve']);
+
+if ($stmt->execute()) {
+    unset($_SESSION['ch1']);
+    echo "<script> 
+        swal({
+            icon: 'success',
+            title: 'Success',
+            text: 'Survey Successfully Added!',
+        }).then(function() {
+            window.location = 'survey.php';
+        });
+    </script>";
+} else {
+    echo "Error: " . $stmt->error;
+}
+
+$stmt->close();
+$conn->close(); // close database connection
+?>
+```
