@@ -1,107 +1,37 @@
 <?php
-session_start();
-require_once 'db.php'; // Use require_once to prevent multiple inclusions
-
-// Check sessions and redirects first
+include('db.php');
 if (!isset($_SESSION['is_login'])) {
-    header('Location: index.php');
-    exit();
-}
-
+    header('location: index.php');
+    die();
+} 
 if (!isset($_SESSION['ch21'])) {
-    header('Location: survey.php');
+    header('location: survey.php');
     exit();
-}
+} 
+else {
 
-// Database connection
-if (!$con) {
-    die("Database connection failed: " . mysqli_connect_error());
-}
+    $id = $_SESSION['id'];
+    //code to fetch all details of user
+    $query = "SELECT * FROM tbl_login WHERE id='$id'";
+    $stmt = mysqli_query($con, $query);
+    $row = mysqli_fetch_array($stmt); {
 
-// Fetch user data using prepared statement
-$user = [];
-$id = $_SESSION['id'];
-$query = "SELECT officerName, email, officerMobile, bcode, dcodeb, designation, urole, sector, password 
-          FROM tbl_login WHERE id = ?";
-$stmt = mysqli_prepare($con, $query);
-mysqli_stmt_bind_param($stmt, 'i', $id);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
+        $name = $row['officerName'];
+        $email = $row['email'];
+        $phone = $row['officerMObile'];
 
-if ($row = mysqli_fetch_assoc($result)) {
-    $user = $row;
-    $address = $row['bcode'] . ", " . $row['dcodeb'];
-    $district = $row['dcodeb'];
-    $block = $row['bcode'];
-    $sector = $row['sector'];
-} else {
-    // Handle case where user doesn't exist
-    session_destroy();
-    header('Location: index.php');
-    exit();
-}
+        $address = $row['bcode'] . ", " . $row['dcodeb'];
+        $designation = $row['designation'];
+        $role = $row['urole'];
 
-// Process form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
-    // Validate and sanitize inputs
-    $required_fields = [
-        'scheme', 'project', 'month', 
-        'opv1', 'opv2', 'opv3', 'opv4',
-        'districtSelect', 'blockSelect', 'sectorSelect'
-    ];
-    
-    foreach ($required_fields as $field) {
-        if (empty($_POST[$field])) {
-            die("Required field $field is missing");
-        }
-    }
+        $id = $row[0];
 
-    // Prepare statement for insertion
-    $insert_query = "INSERT INTO 20_beneficiary_adol 
-        (project, scheme, month, district, block, sector, m1, f1, m2, f2, date, submitted, submitedID)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    
-    $stmt = mysqli_prepare($con, $insert_query);
-    
-    // Bind parameters
-    $date_now = date("Y-m-d");
-    mysqli_stmt_bind_param(
-        $stmt,
-        'ssssssiiiisss',
-        $_POST['project'],
-        $_POST['scheme'],
-        $_POST['month'],
-        $_POST['districtSelect'],
-        $_POST['blockSelect'],
-        $_POST['sectorSelect'],
-        $_POST['opv1'],
-        $_POST['opv2'],
-        $_POST['opv3'],
-        $_POST['opv4'],
-        $date_now,
-        $user['officerName'],
-        $id
-    );
+        $password = $row['password'];
 
-    if (mysqli_stmt_execute($stmt)) {
-        unset($_SESSION['ch21']);
-        echo "<script>
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Survey Successfully Added!'
-            }).then(() => window.location = 'survey.php');
-        </script>";
-        exit();
-    } else {
-        error_log("Database error: " . mysqli_error($con));
-        echo "<script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to save survey!'
-            });
-        </script>";
+        $district = $row['dcodeb'];
+        $block = $row['bcode'];
+        $sector = $row['sector']; //sector name
+
     }
 }
 ?>
@@ -112,122 +42,320 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
     <title>Survey - Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
     <link href="css/styles.css" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
     <link rel="icon" type="image/x-icon" href="assets/img/logo.png">
+
+
+    <!-- sweet alert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="sweetalert2.all.min.js"></script>
+    <script src="sweetalert2.min.js"></script>
+    <link rel="stylesheet" href="sweetalert2.min.css">
+    <script src='https://unpkg.com/sweetalert/dist/sweetalert.min.js'></script>
 </head>
 
 <body class="sb-nav-fixed">
-    <?php require('header.php'); ?>
 
-    <div id="layoutSidenav_content">
-        <main style="padding: 15px;">
-            <section class="section">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Beneficiary Details Adolescent Survey</h5>
+<?php require('header.php'); ?>
 
-                                <form method="POST">
-                                    <!-- Scheme Dropdown -->
+        </div>
+        <div id="layoutSidenav_content">
+            <main  style="padding: 15px;">
+                <!-- start form add new admin -->
+                <section class="section">
+                    <div class="row">
+                        <div class="col-lg-12">
+
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Beneficiary Details Adolscent Survey</h5>
+
+                                    <!-- General Form Elements -->
+                                    <form action="#" method="POST">
+
                                     <div class="row mb-3">
                                         <label class="col-sm-2 col-form-label">Scheme</label>
                                         <div class="col-sm-10">
-                                            <select id="scheme" name="scheme" class="form-select" required>
-                                                <option value="" disabled selected>Select Scheme</option>
-                                                <?php
-                                                $schemes = mysqli_query($con, "SELECT scheme FROM tbl_scheme WHERE status='0'");
-                                                while ($scheme = mysqli_fetch_column($schemes)) {
-                                                    echo "<option value='$scheme'>$scheme</option>";
-                                                }
-                                                ?>
+                                            <select id="scheme" name="scheme" class="form-select" aria-label="Default select example" required>
+                                            <option value="" disabled selected>Select Scheme</option>
+                                            <?php
+                                                // Assuming $con is your database connection
+                                                $query = "SELECT * FROM tbl_scheme WHERE status='0'";
+                                                $stmt = mysqli_query($con, $query);
+                                                while($row = mysqli_fetch_array($stmt)) {
+                                                echo "<option value='".$row['scheme']."'>".$row['scheme']."</option>";       
+                                                } 
+                                            ?>                      
                                             </select>
                                         </div>
-                                    </div>
+                                        </div>
 
-                                    <!-- Project Dropdown -->
-                                    <div class="row mb-3">
+
+                                        <div class="row mb-3">
                                         <label class="col-sm-2 col-form-label">Project</label>
                                         <div class="col-sm-10">
-                                            <select id="project" name="project" class="form-select" required>
-                                                <option value="" disabled selected>Select Project</option>
-                                                <?php
-                                                $projects = mysqli_query($con, "SELECT project FROM tbl_project WHERE status='0'");
-                                                while ($project = mysqli_fetch_column($projects)) {
-                                                    echo "<option value='$project'>$project</option>";
-                                                }
-                                                ?>
+                                            <select id="project" name="project" class="form-select" aria-label="Default select example" required>
+                                            <option value="" disabled selected>Select Project</option>
+                                            <?php
+                                                // Assuming $con is your database connection
+                                                $query = "SELECT * FROM tbl_project WHERE status='0'";
+                                                $stmt = mysqli_query($con, $query);
+                                                while($row = mysqli_fetch_array($stmt)) {
+                                                echo "<option value='".$row['project']."'>".$row['project']."</option>";       
+                                                } 
+                                            ?>                      
                                             </select>
                                         </div>
-                                    </div>
+                                        </div>
 
-                                    <!-- Dynamic Dropdowns -->
-                                    <div class="row mb-3">
+
+                                    
+
+                                        <div class="row mb-3">
+                                            <label class="col-sm-2 col-form-label">Month</label>
+                                            <div class="col-sm-10">
+                                                <select id="month" name="month" class="form-select" aria-label="Default select example" required>
+                                                    <option value="" disabled selected>Select Type </option>
+                                                    <option value="Jan">January</option>
+                                                    <option value="Feb">February</option>
+                                                    <option value="Mar">March</option>
+                                                    <option value="Apr">April</option>
+                                                    <option value="May">May</option>
+                                                    <option value="Jun">June</option>
+                                                    <option value="Jul">July</option>
+                                                    <option value="Aug">August</option>
+                                                    <option value="Sep">September</option>
+                                                    <option value="Oct">October</option>
+                                                    <option value="Nov">November</option>
+                                                    <option value="Dec">December</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
                                         <label class="col-sm-2 col-form-label">District</label>
                                         <div class="col-sm-10">
-                                            <select id="districtSelect" name="districtSelect" class="form-select" required>
-                                                <option disabled value="" selected>Select District</option>
-                                                <?php
-                                                $districts = mysqli_query($con, "SELECT district_code, district_name FROM tbl_district");
-                                                while ($district = mysqli_fetch_assoc($districts)) {
-                                                    echo "<option value='{$district['district_code']}'>{$district['district_name']}</option>";
-                                                }
-                                                ?>
+                                            <select id="districtSelect" name="districtSelect" class="form-select" aria-label="Default select example" required>
+                                            <option disabled value="" selected>Select District</option>
+                                            <?php
+                                                // Assuming $con is your database connection
+                                                $query = "SELECT * FROM tbl_district";
+                                                $stmt = mysqli_query($con, $query);
+                                                while($row = mysqli_fetch_array($stmt)) {
+                                                echo "<option value='".$row['district_code']."'>".$row['district_name']."</option>";       
+                                                } 
+                                            ?>                      
                                             </select>
                                         </div>
-                                    </div>
+                                        </div>
 
-                                    <!-- Remaining form elements... -->
 
-                                </form>
+                                        <div class="row mb-3">
+                                            <label class="col-sm-2 col-form-label">Block</label>
+                                            <div class="col-sm-10">
+                                                <select id="blockSelect" name="blockSelect" class="form-select" aria-label="Default select example" required>
+                                                    <option disabled value=""  selected>Select Block</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+
+                                        <div class="row mb-3">
+                                            <label class="col-sm-2 col-form-label">Sector</label>
+                                            <div class="col-sm-10">
+                                                <select id="sectorSelect" name="sectorSelect" class="form-select" aria-label="Default select example" required>
+                                                    <option value="" disabled selected>Select Sector</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <script>
+                                        // Get references to the dropdowns
+                                        const districtSelect = document.getElementById('districtSelect');
+                                        const blockSelect = document.getElementById('blockSelect');
+                                        const sectorSelect = document.getElementById('sectorSelect');
+
+                                        // Function to populate the block dropdown based on district selection
+                                        function populateBlockDropdown(selectedDistrict) {
+                                            // Clear existing options in the block dropdown
+                                            blockSelect.innerHTML = '<option disabled value="" selected>Select Block</option>';
+
+                                            // Fetch blocks associated with the selected district from the server using AJAX
+                                            if (selectedDistrict !== '') {
+                                                fetch('get_blocks.php?district_code=' + selectedDistrict)
+                                                    .then(response => response.json())
+                                                    .then(data => {
+                                                        data.forEach(block => {
+                                                            const option = document.createElement('option');
+                                                            option.value = block.block_code;
+                                                            option.textContent = block.block_name;
+                                                            blockSelect.appendChild(option);
+                                                        });
+                                                    })
+                                                    .catch(error => console.error('Error fetching blocks:', error));
+                                            }
+                                        }
+
+                                        // Function to populate the sector dropdown based on district and block selections
+                                        function populateSectorDropdown(selectedDistrict, selectedBlock) {
+                                            // Clear existing options in the sector dropdown
+                                            sectorSelect.innerHTML = '<option disabled value="" selected>Select Sector</option>';
+
+                                            // Fetch sectors associated with the selected district and block from the server using AJAX
+                                            if (selectedDistrict !== '' && selectedBlock !== '') {
+                                                fetch('get_sectors.php?district_code=' + selectedDistrict + '&block_code=' + selectedBlock)
+                                                    .then(response => response.json())
+                                                    .then(data => {
+                                                        data.forEach(sector => {
+                                                            const option = document.createElement('option');
+                                                            option.value = sector.sector_code;
+                                                            option.textContent = sector.sector_name;
+                                                            sectorSelect.appendChild(option);
+                                                        });
+                                                    })
+                                                    .catch(error => console.error('Error fetching sectors:', error));
+                                            }
+                                        }
+
+                                        // Add event listeners to the district and block dropdowns
+                                        districtSelect.addEventListener('change', () => {
+                                            const selectedDistrict = districtSelect.value;
+                                            populateBlockDropdown(selectedDistrict);
+                                        });
+
+                                        blockSelect.addEventListener('change', () => {
+                                            const selectedDistrict = districtSelect.value;
+                                            const selectedBlock = blockSelect.value;
+                                            populateSectorDropdown(selectedDistrict, selectedBlock);
+                                        });
+                                        </script>
+
+
+
+                                        <div class="row mb-4">
+                                            <h5>Stage One Survey (14-18 Years)</h5>
+                                        </div>
+                                        <div class="row mb-4">
+                                            <label for="opv1" class="col-sm-2 col-form-label">Number of Male As Per Survey Data</label>
+                                            <div class="col-sm-10">
+                                                <input id="opv1" placeholder="Enter Number" name="opv1" type="number" class="form-control" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-4">
+                                            <label for="opv2" class="col-sm-2 col-form-label">Number of Female As Per Survey Data</label>
+                                            <div class="col-sm-10">
+                                                <input id="opv2" placeholder="Enter Number" name="opv2" type="number" class="form-control" required>
+                                            </div>
+                                        </div>   
+                                        
+                                        
+                                        <div class="row mb-4">
+                                            <label for="opv3" class="col-sm-2 col-form-label">Number of Male In Anganwadi Center</label>
+                                            <div class="col-sm-10">
+                                                <input id="opv3" placeholder="Enter Number" name="opv3" type="number" class="form-control" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-4">
+                                            <label for="opv4" class="col-sm-2 col-form-label">Number of Female In Anganwadi Center</label>
+                                            <div class="col-sm-10">
+                                                <input id="opv4" placeholder="Enter Number" name="opv4" type="number" class="form-control" required>
+                                            </div>
+                                        </div>
+
+                                        
+
+                                        
+                                        
+
+                                        <div class="row mb-3">
+                                            <center>
+                                                <div class="col-sm-10">
+                                                    <button id="submit" name="submit" type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-floppy-disk"></i>&nbsp;Save</button>
+                                                </div>
+                                            </center>
+                                        </div>
+
+                                    </form><!-- End General Form Elements -->
+
+
+
+                                    <?php
+                                    if (isset($_POST['submit'])) {
+                                        // Sanitize and retrieve the POST data
+                                        $scheme  =  mysqli_real_escape_string($con, $_POST['scheme']);
+                                        $project =  mysqli_real_escape_string($con, $_POST['project']);
+                                        $month   =  mysqli_real_escape_string($con, $_POST['month']);
+                                        
+                                        $opv1    =  mysqli_real_escape_string($con, $_POST['opv1']);
+                                        $opv2    =  mysqli_real_escape_string($con, $_POST['opv2']);
+                                        $opv3    =  mysqli_real_escape_string($con, $_POST['opv3']);
+                                        $opv4    =  mysqli_real_escape_string($con, $_POST['opv4']);
+
+                                        
+                                        $district1 =  $_POST['districtSelect'];
+                                        $block1 =  $_POST['blockSelect'];
+                                        $sector1 =  $_POST['sectorSelect'];
+
+                                        date_default_timezone_set("Asia/Calcutta");
+                                        $date_now = date("Y-m-d");
+
+                                        //insert data query
+                                        $res = mysqli_query($con, "INSERT INTO `20_beneficiary_adol`(`project`, `scheme`, `month`, `district`, `block`, `sector`, `m1`, `f1`, `m2`, `f2`, `date`, `submitted`, `submitedID`) VALUES ('$project','$scheme','$month','$district1','$block1','$sector1','$opv1','$opv2','$opv3','$opv4','$date_now','$name', '$id')");
+
+
+                                        if ($res) {
+                                            unset($_SESSION['ch21']);
+                                            //inserted successfully                                            
+                                                echo "<script>                
+                                                   swal({
+                                                       icon: 'success',
+                                                       title: 'Success',
+                                                       text: 'Survey Successfully Added!',
+                                                       }).then(function() {
+                                                           window.location = 'survey.php';
+                                                       });                        
+                                                       </script>";
+                                            } 
+                                        else 
+                                        {
+                                            unset($_SESSION['ch21']);
+                                                echo "
+                                                   <script>                
+                                                       swal({
+                                                           icon: 'info',
+                                                           title:'Failed',
+                                                           text: 'Unable to add survey!',
+                                                           }).then(function() {
+                                                           window.location = 'survey.php';
+                                                           });                        
+                                                           </script>";
+                                            }
+                                        }                                    
+                                    ?>
+
+
+                                </div>
                             </div>
+
                         </div>
+
+
                     </div>
-                </div>
-            </section>
-        </main>
-        <?php require('footer.php'); ?>
-    </div>
+                </section>
+                <!-- end form -->
+            </main>
+            
 
-    <script>
-        // Optimized dropdown handling
-        const handleDropdown = async (url, target, param) => {
-            try {
-                const response = await fetch(`${url}?${param}`);
-                if (!response.ok) throw new Error('Network response was not ok');
-                
-                const data = await response.json();
-                target.innerHTML = data.reduce((acc, item) => 
-                    acc + `<option value="${item.value}">${item.text}</option>`, 
-                    '<option disabled selected>Select...</option>'
-                );
-            } catch (error) {
-                console.error('Error:', error);
-                target.innerHTML = '<option>Error loading options</option>';
-            }
-        };
+            <?php require('footer.php'); ?>
 
-        document.getElementById('districtSelect').addEventListener('change', function() {
-            const blockSelect = document.getElementById('blockSelect');
-            handleDropdown(
-                'get_blocks.php',
-                blockSelect,
-                `district_code=${this.value}`
-            );
-        });
 
-        document.getElementById('blockSelect').addEventListener('change', function() {
-            const sectorSelect = document.getElementById('sectorSelect');
-            handleDropdown(
-                'get_sectors.php',
-                sectorSelect,
-                `district_code=${document.getElementById('districtSelect').value}&block_code=${this.value}`
-            );
-        });
-    </script>
 </body>
+
 </html>
