@@ -1,0 +1,18 @@
+version: '3.9'
+
+services:
+  survey-website:
+    build: .
+    container_name: survey-website
+    ports:
+      - "80:80"
+    restart: always
+    environment:
+      - APACHE_RUN_USER=www-data
+      - APACHE_RUN_GROUP=www-data
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
