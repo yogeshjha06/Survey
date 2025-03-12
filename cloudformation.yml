@@ -42,25 +42,27 @@ Resources:
       SecurityGroups:
         - !Ref WebServerSecurityGroup
       KeyName: !Ref KeyName
-      # Use an Amazon Linux 2 AMI ID valid in your region (this is an example for us-east-1)
       ImageId: ami-0c94855ba95c71c99
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
           yum update -y
-          yum install -y httpd php git
-          systemctl start httpd
-          systemctl enable httpd
-          cd /var/www/html
-          rm -f index.html
-          # Clone the Survey repository
-          git clone https://github.com/yogeshjha06/Survey.git
-          cp -r Survey/* .
-          systemctl restart httpd
+          yum install -y docker git
+          systemctl start docker
+          systemctl enable docker
+          usermod -aG docker ec2-user
+          curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          chmod +x /usr/local/bin/docker-compose
+          git clone https://github.com/yogeshjha06/Survey.git /home/ec2-user/Survey
+          cd /home/ec2-user/Survey
+          docker-compose up --build -d
       Tags:
         - Key: Name
           Value: SurveyWebsite
-
+        - Key: Team
+          Value: NA
+        - Key: Details
+          Value: This is created for test and could be deleted
 Outputs:
   WebsiteURL:
     Description: URL of the deployed website
