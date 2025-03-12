@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to deploy the Survey website (PHP based)
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance.
+    Type: AWS::EC2::KeyPair::KeyName
+  InstanceType:
+    Description: EC2 instance type.
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instance (in CIDR notation).
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    Default: 0.0.0.0/0
+
+Resources:
+  WebServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP and SSH access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHLocation
+
+  WebServerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroups:
+        - !Ref WebServerSecurityGroup
+      KeyName: !Ref KeyName
+      # Use an Amazon Linux 2 AMI ID valid in your region (this is an example for us-east-1)
+      ImageId: ami-0c94855ba95c71c99
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd php git
+          systemctl start httpd
+          systemctl enable httpd
+          cd /var/www/html
+          rm -f index.html
+          # Clone the Survey repository
+          git clone https://github.com/yogeshjha06/Survey.git
+          cp -r Survey/* .
+          systemctl restart httpd
+      Tags:
+        - Key: Name
+          Value: SurveyWebsite
+
+Outputs:
+  WebsiteURL:
+    Description: URL of the deployed website
+    Value: !Sub "http://${WebServerInstance.PublicIp}/"
