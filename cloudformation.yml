@@ -1,16 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: WMAI Survey Website Deployment (wmai-testing-dev)
+Description: WMAI Simple Website Deployment
 
 Parameters:
-  KeyName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: SSH key pair for EC2 access
-    ConstraintDescription: Must be existing key pair
-  SSHLocation:
-    Type: String
-    Description: Allowed SSH CIDR (Restrict to your IP for security)
-    Default: 123.45.67.89/32  # Replace with your IP
-    AllowedPattern: ^\d+\.\d+\.\d+\.\d+/\d+$
   GitRepoURL:
     Type: String
     Description: GitHub repository URL
@@ -28,93 +19,58 @@ Mappings:
       AMI: ami-0d70546e43a941d70  # Amazon Linux 2
 
 Resources:
-  WMAILogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: "/wmai/testing/dev"
-      RetentionInDays: 7
-
-  WebServerRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal: { Service: [ec2.amazonaws.com] }
-            Action: ["sts:AssumeRole"]
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
-
-  WebServerInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Roles: [!Ref WebServerRole]
-
   WebServerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Enable HTTP access and restricted SSH
+      GroupDescription: Allow HTTP access
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: !Ref SSHLocation
 
   WebServerInstance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
-      KeyName: !Ref KeyName
-      IamInstanceProfile: !Ref WebServerInstanceProfile
       SecurityGroupIds: [!Ref WebServerSecurityGroup]
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+          exec > >(tee /var/log/user-data.log) 2>&1
           
-          # Install dependencies
+          # Install web server and PHP
           yum update -y
-          amazon-linux-extras install docker -y
-          systemctl start docker
-          systemctl enable docker
-          usermod -aG docker ec2-user
+          amazon-linux-extras install php8.0 -y
+          yum install -y httpd git
           
-          # Install Docker Compose
-          curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
-            -o /usr/local/bin/docker-compose
-          chmod +x /usr/local/bin/docker-compose
+          # Configure Apache
+          systemctl start httpd
+          systemctl enable httpd
+          usermod -a -G apache ec2-user
+          chown -R ec2-user:apache /var/www
+          chmod 2775 /var/www
           
-          # Clone repository
-          git clone -b ${GitBranch} ${GitRepoURL} /home/ec2-user/app
+          # Deploy website
+          rm -rf /var/www/html/*
+          git clone -b ${GitBranch} ${GitRepoURL} /var/www/html/
           
-          # Deploy application
-          cd /home/ec2-user/app
-          docker-compose up --build -d
+          # Ensure proper permissions
+          chmod -R 775 /var/www/html
+          find /var/www/html -type d -exec chmod 2775 {} \;
+          find /var/www/html -type f -exec chmod 0664 {} \;
           
-          # Send initial logs to CloudWatch
-          aws logs create-log-stream \
-            --log-group-name "/wmai/testing/dev" \
-            --log-stream-name "instance-$(curl -s http://169.254.169.254/latest/meta-data/instance-id)"
+          # Restart Apache
+          systemctl restart httpd
 
       Tags:
         - Key: Name
-          Value: wmai-testing-dev
+          Value: wmai-website
         - Key: Project
           Value: WMAI
-        - Key: Environment
-          Value: Development
-        - Key: Owner
-          Value: DevOpsTeam
 
 Outputs:
   WebsiteURL:
-    Description: URL to access the survey website
+    Description: URL to access the website
     Value: !Sub "http://${WebServerInstance.PublicDnsName}/"
-    Export:
-      Name: WMAI-WebsiteURL
