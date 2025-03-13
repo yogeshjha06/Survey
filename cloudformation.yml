@@ -1,30 +1,60 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudFormation template to deploy the Survey website (PHP based)
+Description: WMAI Survey Website Deployment (wmai-testing-dev)
 
 Parameters:
   KeyName:
-    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance.
     Type: AWS::EC2::KeyPair::KeyName
-  InstanceType:
-    Description: EC2 instance type.
-    Type: String
-    Default: t2.micro
-    AllowedValues:
-      - t2.micro
-      - t2.small
-      - t2.medium
+    Description: SSH key pair for EC2 access
+    ConstraintDescription: Must be existing key pair
   SSHLocation:
-    Description: The IP address range that can be used to SSH to the EC2 instance (in CIDR notation).
     Type: String
-    MinLength: 9
-    MaxLength: 18
-    Default: 0.0.0.0/0
+    Description: Allowed SSH CIDR (Restrict to your IP for security)
+    Default: 123.45.67.89/32  # Replace with your IP
+    AllowedPattern: ^\d+\.\d+\.\d+\.\d+/\d+$
+  GitRepoURL:
+    Type: String
+    Description: GitHub repository URL
+    Default: https://github.com/yogeshjha06/Survey.git
+  GitBranch:
+    Type: String
+    Description: Git branch to deploy
+    Default: main
+
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMI: ami-0c94855ba95c71c99  # Amazon Linux 2
+    us-west-2:
+      AMI: ami-0d70546e43a941d70  # Amazon Linux 2
 
 Resources:
+  WMAILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/wmai/testing/dev"
+      RetentionInDays: 7
+
+  WebServerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: [ec2.amazonaws.com] }
+            Action: ["sts:AssumeRole"]
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+
+  WebServerInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref WebServerRole]
+
   WebServerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Enable HTTP and SSH access
+      GroupDescription: Enable HTTP access and restricted SSH
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -38,32 +68,53 @@ Resources:
   WebServerInstance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: !Ref InstanceType
-      SecurityGroups:
-        - !Ref WebServerSecurityGroup
+      InstanceType: t2.micro
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
       KeyName: !Ref KeyName
-      ImageId: ami-0c94855ba95c71c99
+      IamInstanceProfile: !Ref WebServerInstanceProfile
+      SecurityGroupIds: [!Ref WebServerSecurityGroup]
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+          
+          # Install dependencies
           yum update -y
-          yum install -y docker git
+          amazon-linux-extras install docker -y
           systemctl start docker
           systemctl enable docker
           usermod -aG docker ec2-user
-          curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          
+          # Install Docker Compose
+          curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
+            -o /usr/local/bin/docker-compose
           chmod +x /usr/local/bin/docker-compose
-          git clone https://github.com/yogeshjha06/Survey.git /home/ec2-user/Survey
-          cd /home/ec2-user/Survey
+          
+          # Clone repository
+          git clone -b ${GitBranch} ${GitRepoURL} /home/ec2-user/app
+          
+          # Deploy application
+          cd /home/ec2-user/app
           docker-compose up --build -d
+          
+          # Send initial logs to CloudWatch
+          aws logs create-log-stream \
+            --log-group-name "/wmai/testing/dev" \
+            --log-stream-name "instance-$(curl -s http://169.254.169.254/latest/meta-data/instance-id)"
+
       Tags:
         - Key: Name
-          Value: SurveyWebsite
-        - Key: Team
-          Value: NA
-        - Key: Details
-          Value: This is created for test and could be deleted
+          Value: wmai-testing-dev
+        - Key: Project
+          Value: WMAI
+        - Key: Environment
+          Value: Development
+        - Key: Owner
+          Value: DevOpsTeam
+
 Outputs:
   WebsiteURL:
-    Description: URL of the deployed website
-    Value: !Sub "http://${WebServerInstance.PublicIp}/"
+    Description: URL to access the survey website
+    Value: !Sub "http://${WebServerInstance.PublicDnsName}/"
+    Export:
+      Name: WMAI-WebsiteURL
