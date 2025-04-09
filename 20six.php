@@ -11,7 +11,6 @@ if (!isset($_SESSION['ch20'])) {
 else {
 
     $id = $_SESSION['id'];
-    //code to fetch all details of user
     $query = "SELECT * FROM tbl_login WHERE id='$id'";
     $stmt = mysqli_query($con, $query);
     $row = mysqli_fetch_array($stmt); {
@@ -30,7 +29,7 @@ else {
 
         $district = $row['dcodeb'];
         $block = $row['bcode'];
-        $sector = $row['sector']; //sector name
+        $sector = $row['sector']; 
 
     }
 }
@@ -49,9 +48,6 @@ else {
     <link href="css/styles.css" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
     <link rel="icon" type="image/x-icon" href="assets/img/logo.png">
-
-
-    <!-- sweet alert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="sweetalert2.all.min.js"></script>
     <script src="sweetalert2.min.js"></script>
@@ -74,8 +70,6 @@ else {
                             <div class="card">
                                 <div class="card-body">
                                     <h5 class="card-title">Beneficiary Details (3-6 years) Survey</h5>
-
-                                    <!-- General Form Elements -->
                                     <form action="#" method="POST">
 
                                     <div class="row mb-3">
@@ -84,7 +78,6 @@ else {
                                             <select id="scheme" name="scheme" class="form-select" aria-label="Default select example" required>
                                             <option value="" disabled selected>Select Scheme</option>
                                             <?php
-                                                // Assuming $con is your database connection
                                                 $query = "SELECT * FROM tbl_scheme WHERE status='0'";
                                                 $stmt = mysqli_query($con, $query);
                                                 while($row = mysqli_fetch_array($stmt)) {
@@ -175,17 +168,11 @@ else {
                                         </div>
 
                                         <script>
-                                        // Get references to the dropdowns
                                         const districtSelect = document.getElementById('districtSelect');
                                         const blockSelect = document.getElementById('blockSelect');
                                         const sectorSelect = document.getElementById('sectorSelect');
-
-                                        // Function to populate the block dropdown based on district selection
                                         function populateBlockDropdown(selectedDistrict) {
-                                            // Clear existing options in the block dropdown
                                             blockSelect.innerHTML = '<option disabled value="" selected>Select Block</option>';
-
-                                            // Fetch blocks associated with the selected district from the server using AJAX
                                             if (selectedDistrict !== '') {
                                                 fetch('get_blocks.php?district_code=' + selectedDistrict)
                                                     .then(response => response.json())
@@ -200,13 +187,8 @@ else {
                                                     .catch(error => console.error('Error fetching blocks:', error));
                                             }
                                         }
-
-                                        // Function to populate the sector dropdown based on district and block selections
                                         function populateSectorDropdown(selectedDistrict, selectedBlock) {
-                                            // Clear existing options in the sector dropdown
                                             sectorSelect.innerHTML = '<option disabled value="" selected>Select Sector</option>';
-
-                                            // Fetch sectors associated with the selected district and block from the server using AJAX
                                             if (selectedDistrict !== '' && selectedBlock !== '') {
                                                 fetch('get_sectors.php?district_code=' + selectedDistrict + '&block_code=' + selectedBlock)
                                                     .then(response => response.json())
